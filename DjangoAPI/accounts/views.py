@@ -14,6 +14,15 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
 # from rest_framework.views import APIView
 
+# accounts/views.py
+from rest_framework_simplejwt.views import TokenVerifyView
+from rest_framework.response import Response
+from rest_framework import status
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from .serializers import UserSerializer
+from .models import CustomUser
+
 
 class LoginView(TokenObtainPairView):
     """
@@ -85,6 +94,110 @@ class RefreshView(TokenRefreshView):
             Response: Resposta JSON com um novo token de acesso em caso de sucesso, ou mensagem de erro em caso de falha.
         """
         return super().post(request, *args, **kwargs)
+    
+
+# accounts/views.py
+from rest_framework_simplejwt.views import TokenVerifyView
+from rest_framework.response import Response
+from rest_framework import status
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from django.contrib.auth import get_user_model
+from .serializers import UserSerializer
+
+class ValidateTokenView(TokenVerifyView):
+    """
+    Endpoint de Validação de Token
+    Verifica a validade do token JWT e retorna informações do usuário autenticado.
+    """
+    
+    @swagger_auto_schema(
+        operation_description="Validar token JWT e recuperar dados do usuário",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['token'],
+            properties={
+                'token': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Token JWT para validação'
+                ),
+            },
+        ),
+        responses={
+            200: openapi.Response(
+                description="Token válido",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "valid": openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        "user": UserSerializer().data,
+                    }
+                )
+            ),
+            401: openapi.Response(
+                description="Token inválido/expirado",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "valid": openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        "message": openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            500: openapi.Response(description="Erro interno no servidor")
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        try:
+            # Verifica o token usando a lógica do SimpleJWT
+            response = super().post(request, *args, **kwargs)
+            
+            if response.status_code != 200:
+                return response  # Retorna erro 401 se token inválido
+            
+            # Obtém o token do corpo da requisição
+            token = request.data.get('token')
+            if not token:
+                return Response({
+                    "valid": False,
+                    "message": "Token não fornecido"
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            try:
+                # Decodifica o token para obter o payload
+                untyped_token = UntypedToken(token)
+                user_id = untyped_token.get('user_id')
+                
+                # Busca o usuário no banco de dados
+                User = get_user_model()
+                user = User.objects.get(id=user_id)
+                
+                # Serializa os dados do usuário
+                serializer = UserSerializer(user)
+                
+                return Response({
+                    "valid": True,
+                    "user": serializer.data
+                }, status=status.HTTP_200_OK)
+                
+            except (InvalidToken, TokenError) as e:
+                return Response({
+                    "valid": False,
+                    "message": f"Token inválido: {str(e)}"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            except User.DoesNotExist:
+                return Response({
+                    "valid": False,
+                    "message": "Usuário não encontrado"
+                }, status=status.HTTP_404_NOT_FOUND)
+                
+        except Exception as e:
+            return Response({
+                "valid": False,
+                "message": f"Erro interno: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class LogoutView(TokenBlacklistView):
@@ -160,7 +273,7 @@ class UserListCreateView(generics.ListCreateAPIView):
         operation_description="Criar novo usuário (somente administradores)",
         request_body=UserSerializer,
         responses={
-            201: openapi.Response(description="Usuário criado com sucesso"),
+            201: openapi.Response(description="Usuário criado com sucesso", schema=UserSerializer),
             400: openapi.Response(description="Requisição inválida - Dados inválidos"),
             403: openapi.Response(description="Proibido - Acesso de administrador necessário")
         }
@@ -175,8 +288,11 @@ class UserListCreateView(generics.ListCreateAPIView):
         Returns:
             Response: Resposta JSON com os detalhes do usuário criado em caso de sucesso, ou mensagem de erro em caso de falha.
         """
-        super().create(request, *args, **kwargs)
-        return Response({"message": "Usuário criado com sucesso"}, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({"message": "Usuário criado com sucesso"}, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -193,7 +309,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     @swagger_auto_schema(
         operation_description="Recuperar detalhes do usuário (somente administradores)",
         responses={
-            200: openapi.Response(description="Detalhes do usuário recuperados com sucesso"),
+            200: openapi.Response(description="Detalhes do usuário recuperados com sucesso", schema=UserSerializer),
             403: openapi.Response(description="Proibido - Acesso de administrador necessário"),
             404: openapi.Response(description="Usuário não encontrado")
         }
@@ -232,8 +348,12 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
         Returns:
             Response: Resposta JSON com os detalhes atualizados do usuário em caso de sucesso, ou mensagem de erro em caso de falha.
         """
-        super().update(request, *args, **kwargs)
-        return Response({"message": "Usuário atualizado com sucesso"}, status=status.HTTP_200_OK)
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response({"message": "Usuário atualizado com sucesso", "user": serializer.data}, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         operation_description="Excluir usuário (somente administradores)",
