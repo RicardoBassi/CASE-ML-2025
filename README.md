@@ -23,65 +23,85 @@ Este repositório contém uma API Django para realizar predições de carga de a
    - Baixe e instale o Miniconda ou Anaconda.
 
 2. **Crie um Ambiente Conda**:
+```bash
    conda create --name api-env python=3.10
+```
 
 3. **Ative o Ambiente**:
+```bash
    conda activate api-env
+```
 
 4. **Instale as Dependências**:
    - Navegue para o diretório raiz do projeto (CASE-ML-2025).
    - Execute o comando:
-     pip install -r requirements.txt
-
+```bash
+    pip install -r requirements.txt
+```
 5. **Verifique a Instalação**:
    - Verifique se o Django foi instalado corretamente:
+```bash
      python -m django --version
-
+```
 ### Opção 2: Usando Virtualenv
 
 1. **Instale o Virtualenv**:
    - Se ainda não tiver o `virtualenv` instalado, execute:
+```bash
      pip install virtualenv
-
+```
 2. **Crie um Ambiente Virtual**:
+```bash
    virtualenv venv
-
+```
 3. **Ative o Ambiente**:
    - **No Linux/MacOS**:
-     source venv/bin/activate
+```bash
+     source venv/bin/
+```
    - **No Windows**:
+```bash
      venv\Scripts\activate
-
+```
 4. **Instale as Dependências**:
    - Navegue para o diretório raiz do projeto (CASE-ML-2025).
    - Execute o comando:
+```bash
      pip install -r requirements.txt
-
+```
 5. **Verifique a Instalação**:
    - Verifique se o Django foi instalado corretamente:
+```bash
      python -m django --version
-
+```
 ---
 
 ## 2. Configuração do Banco de Dados PostgreSQL
 
 1. **Instale o PostgreSQL**:
    - **No Linux**:
+```bash
      sudo apt update
      sudo apt install postgresql postgresql-contrib
+```
    - **No MacOS (via Homebrew)**:
+```bash
      brew install postgresql
+```
    - **No Windows**: Faça o download e instale o PostgreSQL a partir do site oficial.
 
 2. **Crie um Banco de Dados**:
    - Acesse o PostgreSQL:
+```bash
      sudo -u postgres psql
+```
    - Execute os seguintes comandos para criar o banco de dados:
+```bash
      CREATE DATABASE nome_do_banco;
      CREATE USER usuario WITH PASSWORD 'senha';
      GRANT ALL PRIVILEGES ON DATABASE nome_do_banco TO usuario;
      \q
-
+```
 3. **Configure o Arquivo `settings.py`**:
    - Atualize as configurações do banco de dados no arquivo `settings.py`:
      ```python
@@ -102,15 +122,18 @@ Este repositório contém uma API Django para realizar predições de carga de a
 ## 3. Executando a API Localmente
 
 1. **Aplique as Migrações**:
+```bash
    python manage.py makemigrations
    python manage.py migrate
-
+```
 2. **Crie um Superusuário**:
+```bash
    python manage.py createsuperuser
-
+```
 3. **Execute o Servidor de Desenvolvimento**:
+```bash
    python manage.py runserver
-
+```
 4. **Acesse a API**:
    - Acesse a documentação Swagger em:
      http://localhost:8000/swagger/
@@ -129,18 +152,24 @@ Instale o Docker e o Docker Compose.
 
 1. **Construa e Inicie os Containers**:
    - Navegue para o diretório que contém a API (DjangoAPI). Esse diretório contém os arquivos necessários para a execução do container.
+```bash
      docker-compose --build
+```
    - Aguarde o download e instalação do container. Após finalizar execute:
+```bash
      docker-compose up
+```
 
 2. **Aplique as Migrações no Container**:
    - Em um novo terminal, execute:
+```bash
      docker-compose exec web python manage.py makemigrations
      docker-compose exec web python manage.py migrate
-
+```
 3. **Crie um Superusuário**:
+```bash
    docker-compose exec web python manage.py createsuperuser
-
+```
 4. **Acesse a API**:
    - Acesse a documentação Swagger em:
      http://localhost:8000/swagger/
@@ -150,17 +179,21 @@ Instale o Docker e o Docker Compose.
 ## 5. Comandos Úteis
 
 1. **Parar os Containers**:
+```bash
    docker-compose down
-
+```
 2. **Reconstruir os Containers**:
+```bash
    docker-compose up --build
-
+```
 3. **Acessar o Shell do Django**:
+```bash
    docker-compose exec web python manage.py shell
-
+```
 4. **Limpar Dados do PostgreSQL**:
+```bash
    docker-compose down -v
-
+```
 ---
 
 ## 6. Considerações Finais
