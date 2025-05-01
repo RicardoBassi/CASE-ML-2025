@@ -54,6 +54,6 @@ class Regressor:
         prediction = self.model.predict(scaled)
 
         return {
-            "heating_load": float(prediction[0][0]),
-            "cooling_load": float(prediction[0][1]),
+            "heating_load": round(float(prediction[0][0]), 2),
+            "cooling_load": round(float(prediction[0][1]), 2),
         }
