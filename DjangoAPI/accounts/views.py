@@ -7,21 +7,11 @@ from rest_framework import status
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView, TokenBlacklistView
-# from rest_framework_simplejwt.authentication import JWTAuthentication
-# from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
-# from rest_framework.views import APIView
-
-# accounts/views.py
 from rest_framework_simplejwt.views import TokenVerifyView
-from rest_framework.response import Response
-from rest_framework import status
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from .serializers import UserSerializer
-from .models import CustomUser
 
 
 class LoginView(TokenObtainPairView):
@@ -94,25 +84,14 @@ class RefreshView(TokenRefreshView):
             Response: Resposta JSON com um novo token de acesso em caso de sucesso, ou mensagem de erro em caso de falha.
         """
         return super().post(request, *args, **kwargs)
-    
 
-# accounts/views.py
-from rest_framework_simplejwt.views import TokenVerifyView
-from rest_framework.response import Response
-from rest_framework import status
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from rest_framework_simplejwt.tokens import UntypedToken
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from django.contrib.auth import get_user_model
-from .serializers import UserSerializer
 
 class ValidateTokenView(TokenVerifyView):
     """
     Endpoint de Validação de Token
     Verifica a validade do token JWT e retorna informações do usuário autenticado.
     """
-    
+
     @swagger_auto_schema(
         operation_description="Validar token JWT e recuperar dados do usuário",
         request_body=openapi.Schema(
@@ -153,10 +132,10 @@ class ValidateTokenView(TokenVerifyView):
         try:
             # Verifica o token usando a lógica do SimpleJWT
             response = super().post(request, *args, **kwargs)
-            
+
             if response.status_code != 200:
                 return response  # Retorna erro 401 se token inválido
-            
+
             # Obtém o token do corpo da requisição
             token = request.data.get('token')
             if not token:
@@ -164,24 +143,24 @@ class ValidateTokenView(TokenVerifyView):
                     "valid": False,
                     "message": "Token não fornecido"
                 }, status=status.HTTP_400_BAD_REQUEST)
-                
+
             try:
                 # Decodifica o token para obter o payload
                 untyped_token = UntypedToken(token)
                 user_id = untyped_token.get('user_id')
-                
+
                 # Busca o usuário no banco de dados
                 User = get_user_model()
                 user = User.objects.get(id=user_id)
-                
+
                 # Serializa os dados do usuário
                 serializer = UserSerializer(user)
-                
+
                 return Response({
                     "valid": True,
                     "user": serializer.data
                 }, status=status.HTTP_200_OK)
-                
+
             except (InvalidToken, TokenError) as e:
                 return Response({
                     "valid": False,
@@ -192,7 +171,7 @@ class ValidateTokenView(TokenVerifyView):
                     "valid": False,
                     "message": "Usuário não encontrado"
                 }, status=status.HTTP_404_NOT_FOUND)
-                
+
         except Exception as e:
             return Response({
                 "valid": False,
