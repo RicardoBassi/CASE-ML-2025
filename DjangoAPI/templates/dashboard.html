@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Prediction List</h2>
+
+<div id="dashboardContent" class="mt-4">
+    <!-- Conteúdo carregado dinamicamente -->
+</div>
+
+<script>
+async function loadDashboardData() {
+    const token = localStorage.getItem('accessToken');
+    
+    if (!token) {
+        alert('Você precisa estar logado para ver a lista de predições.');
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/predictions/', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const container = document.getElementById('dashboardContent');
+            container.innerHTML = `
+                <h4>Registros (${data.length})</h4>
+                ${data.map(record => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5>Dados de Entrada</h5>
+                            <p>X1: ${record.input_X1}</p>
+                            <p>X2: ${record.input_X2}</p>
+                            <p>X3: ${record.input_X3}</p>
+                            <p>X6: ${record.input_X6}</p>
+                            <p>X7: ${record.input_X7}</p>
+                            <p>X8: ${record.input_X8}</p>
+                            
+                            <h5>Resultados</h5>
+                            <p>Carga de Aquecimento: ${record.output_heating_load}</p>
+                            <p>Carga de Resfriamento: ${record.output_cooling_load}</p>
+                            <p>Data: ${new Date(record.created_at).toLocaleString()}</p>
+                            <button class="btn btn-sm btn-danger" onclick="deletePrediction(${record.id})">Excluir</button>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        } else if (response.status === 401) {
+            alert('Sessão expirada. Faça login novamente.');
+            localStorage.clear();
+            window.location.href = '/login';
+        } else {
+            const errorData = await response.json();
+            alert(`Erro: ${errorData.detail || 'Falha ao carregar dados'}`);
+        }
+    } catch (error) {
+        alert(`Erro inesperado: ${error.message}`);
+    }
+}
+
+async function deletePrediction(id) {
+    if (!confirm('Tem certeza que deseja excluir esta predição?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    
+    try {
+        const response = await fetch(`/api/predictions/${id}/`, {
+            method: 'DELETE',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            loadDashboardData(); // Recarrega dados após exclusão
+        } else {
+            const errorData = await response.json();
+            alert(`Erro: ${errorData.detail || 'Falha ao excluir'}`);
+        }
+    } catch (error) {
+        alert(`Erro inesperado: ${error.message}`);
+    }
+}
+
+// Carrega dados imediatamente ao abrir a página
+loadDashboardData();
+</script>
+{% endblock %}

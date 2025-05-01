@@ -72,14 +72,12 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=24),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),   # Recomendado para segurança
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=24),    # Permite renovação por 24h
+    'ROTATE_REFRESH_TOKENS': True,                    # Gera novo refresh token a cada requisição
+    'BLACKLIST_AFTER_ROTATION': True,                 # Invalida tokens antigos após renovação
+    'ALGORITHM': 'HS256',                             # Algoritmo seguro
+    'AUTH_HEADER_TYPES': ('Bearer',),                 # Compatível com os headers usados nos templates
 }
 
 MIDDLEWARE = [

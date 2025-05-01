@@ -19,19 +19,17 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from accounts.views import (
     LoginView,
     RefreshView,
+    ValidateTokenView,
     LogoutView,
     UserListCreateView,
     UserDetailView,
 )
-
+from django.views.generic import TemplateView, RedirectView
 from predictions.views import PredictionView, PredictionListView, PredictionDeleteView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.urls import path, re_path
-
-# from django.conf import settings
-# from django.conf.urls.static import static
 
 
 schema_view = get_schema_view(
@@ -55,9 +53,10 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     # Autenticação JWT
-    path('api/login/', LoginView.as_view(), name='token_obtain_pair'),  # Login
-    path('api/refresh/', RefreshView.as_view(), name='token_refresh'),  # Refresh token
-    path('api/logout/', LogoutView.as_view(), name='logout'),  # Logout
+    path('api/login/', LoginView.as_view(), name='token_obtain_pair'),                  # Login
+    path('api/refresh/', RefreshView.as_view(), name='token_refresh'),                  # Refresh token
+    path('api/validate-token/', ValidateTokenView.as_view(), name='validate_token'),    # Validate token
+    path('api/logout/', LogoutView.as_view(), name='logout'),                           # Logout
 
     # Gerenciamento de Usuários
     path('api/users/', UserListCreateView.as_view(), name='user-list-create'),  # Listar/Criar usuários
@@ -67,9 +66,12 @@ urlpatterns = [
     path('api/predict/', PredictionView.as_view(), name='predict'),                                 # Criar uma predição
     path('api/predictions/', PredictionListView.as_view(), name='prediction-list'),                 # Listar predições
     path('api/predictions/<int:pk>/', PredictionDeleteView.as_view(), name='prediction-delete'),    # Deletar predições
+
+    # Frontend
+    path('', RedirectView.as_view(url='/login'), name='root_redirect'),
+    path('login/', TemplateView.as_view(template_name='login.html'), name='login'),                       # Página de Login
+    path('logout/', TemplateView.as_view(template_name='logout.html'), name='logout'),                    # Página de Logout
+    path('dashboard/', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),           # Dashboard
+    path('users/', TemplateView.as_view(template_name='users.html'), name='users'),                       # Gerenciamento de Usuários
+    path('predictions/', TemplateView.as_view(template_name='predictions.html'), name='predictions'),     # Gerenciamento de Predições
 ]
-
-
-# Serve media files during development
-# if settings.DEBUG:
-#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Nova Predição</h2>
+<form id="predictionForm">
+    <div class="mb-3">
+        <label for="X1" class="form-label">X1 (Compacidade Relativa)</label>
+        <input type="number" step="0.01" class="form-control" id="X1" required>
+    </div>
+    <div class="mb-3">
+        <label for="X2" class="form-label">X2 (Área de Superfície)</label>
+        <input type="number" step="0.1" class="form-control" id="X2" required>
+    </div>
+    <div class="mb-3">
+        <label for="X3" class="form-label">X3 (Área da Parede)</label>
+        <input type="number" step="0.1" class="form-control" id="X3" required>
+    </div>
+    <div class="mb-3">
+        <label for="X6" class="form-label">X6 (Orientação)</label>
+        <input type="number" class="form-control" id="X6" required>
+    </div>
+    <div class="mb-3">
+        <label for="X7" class="form-label">X7 (Área de Vidro)</label>
+        <input type="number" step="0.1" class="form-control" id="X7" required>
+    </div>
+    <div class="mb-3">
+        <label for="X8" class="form-label">X8 (Distribuição da Área de Vidro)</label>
+        <input type="number" class="form-control" id="X8" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Executar Predição</button>
+</form>
+
+<div id="resultSection" class="mt-4" style="display: none;">
+    <h4>Resultados da Predição</h4>
+    <p>Carga de Aquecimento: <span id="heatingLoad"></span></p>
+    <p>Carga de Resfriamento: <span id="coolingLoad"></span></p>
+</div>
+
+<script>
+document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+        alert('Você precisa estar logado para realizar predições.');
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/predict/', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                X1: parseFloat(document.getElementById('X1').value),
+                X2: parseFloat(document.getElementById('X2').value),
+                X3: parseFloat(document.getElementById('X3').value),
+                X6: parseInt(document.getElementById('X6').value),
+                X7: parseFloat(document.getElementById('X7').value),
+                X8: parseInt(document.getElementById('X8').value)
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Exibe resultados
+            document.getElementById('heatingLoad').textContent = data.prediction.heating_load;
+            document.getElementById('coolingLoad').textContent = data.prediction.cooling_load;
+            document.getElementById('resultSection').style.display = 'block';
+            
+            // Limpa formulário
+            document.getElementById('predictionForm').reset();
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Falha na predição');
+        }
+    } catch (error) {
+        alert(`Erro: ${error.message}`);
+    }
+});
+</script>
+{% endblock %}

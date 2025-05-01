@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Login</h2>
+<form id="loginForm">
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" required>
+    </div>
+    <div class="mb-3">
+        <label for="password" class="form-label">Senha</label>
+        <input type="password" class="form-control" id="password" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Entrar</button>
+</form>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    try {
+        const response = await fetch('/api/login/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('accessToken', data.access);
+            localStorage.setItem('refreshToken', data.refresh);
+            
+            // Verificação adicional pós-login
+            const validateResponse = await fetch('/api/validate-token/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ token: data.access })
+            });
+            
+            if (validateResponse.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                throw new Error('Token inválido após login');
+            }
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Credenciais inválidas');
+        }
+    } catch (error) {
+        alert(`Erro: ${error.message}`);
+    }
+});
+</script>
+{% endblock %}
