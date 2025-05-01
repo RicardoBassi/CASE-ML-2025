@@ -23,6 +23,8 @@ from accounts.views import (
     UserListCreateView,
     UserDetailView,
 )
+
+from predictions.views import PredictionView, PredictionListView, PredictionDeleteView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -60,6 +62,11 @@ urlpatterns = [
     # Gerenciamento de Usuários
     path('api/users/', UserListCreateView.as_view(), name='user-list-create'),  # Listar/Criar usuários
     path('api/users/<int:id>/', UserDetailView.as_view(), name='user-detail'),  # Detalhes/Atualizar/Excluir usuário
+
+    # Predição
+    path('api/predict/', PredictionView.as_view(), name='predict'),                                 # Criar uma predição
+    path('api/predictions/', PredictionListView.as_view(), name='prediction-list'),                 # Listar predições
+    path('api/predictions/<int:pk>/', PredictionDeleteView.as_view(), name='prediction-delete'),    # Deletar predições
 ]
 
 
