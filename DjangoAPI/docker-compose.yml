@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DJANGO_DB_NAME=prediction_db
+      - DJANGO_DB_USER=prediction_user
+      - DJANGO_DB_PASSWORD=Senha123!
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=5432
+ 
+  db:
+    image: postgres:17
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: prediction_db
+      POSTGRES_USER: prediction_user
+      POSTGRES_PASSWORD: Senha123!
+
+volumes:
+  pgdata:
