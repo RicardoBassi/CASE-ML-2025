@@ -30,6 +30,12 @@
     <button type="submit" class="btn btn-primary">Executar Predição</button>
 </form>
 
+<!-- Mensagem de carregamento -->
+<div id="loadingMessage" class="alert alert-info mt-3" style="display: none;">
+    Aguarde, realizando predição...
+</div>
+
+<!-- Resultados da predição -->
 <div id="resultSection" class="mt-4" style="display: none;">
     <h4>Resultados da Predição</h4>
     <p>Carga de Aquecimento: <span id="heatingLoad"></span></p>
@@ -39,7 +45,7 @@
 <script>
 document.getElementById('predictionForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const token = localStorage.getItem('accessToken');
     if (!token) {
         alert('Você precisa estar logado para realizar predições.');
@@ -47,10 +53,14 @@ document.getElementById('predictionForm').addEventListener('submit', async (e) =
         return;
     }
 
+    // Exibe a mensagem de carregamento
+    document.getElementById('loadingMessage').style.display = 'block';
+    document.getElementById('resultSection').style.display = 'none';
+
     try {
         const response = await fetch('/api/predict/', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
@@ -63,15 +73,18 @@ document.getElementById('predictionForm').addEventListener('submit', async (e) =
                 X8: parseInt(document.getElementById('X8').value)
             })
         });
-        
+
+        // Oculta a mensagem de carregamento após a resposta
+        document.getElementById('loadingMessage').style.display = 'none';
+
         if (response.ok) {
             const data = await response.json();
-            
+
             // Exibe resultados
             document.getElementById('heatingLoad').textContent = data.prediction.heating_load;
             document.getElementById('coolingLoad').textContent = data.prediction.cooling_load;
             document.getElementById('resultSection').style.display = 'block';
-            
+
             // Limpa formulário
             document.getElementById('predictionForm').reset();
         } else {
@@ -79,6 +92,7 @@ document.getElementById('predictionForm').addEventListener('submit', async (e) =
             throw new Error(errorData.detail || 'Falha na predição');
         }
     } catch (error) {
+        document.getElementById('loadingMessage').style.display = 'none';
         alert(`Erro: ${error.message}`);
     }
 });

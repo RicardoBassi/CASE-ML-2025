@@ -169,7 +169,7 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
         } else if (response.status === 401) {
             throw new Error('Sessão expirada. Por favor, faça login novamente.');
         } else {
-            throw new Error('Erro ao criar o usuário.');
+            throw new Error('Apenas administradores podem criar usuários.');
         }
     } catch (error) {
         alert(error.message);
