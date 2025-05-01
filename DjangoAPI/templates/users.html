@@ -280,7 +280,7 @@ document.getElementById('editUserForm').addEventListener('submit', async (e) => 
         } else if (response.status === 401) {
             throw new Error('Sessão expirada. Por favor, faça login novamente.');
         } else {
-            throw new Error('Erro ao atualizar o usuário.');
+            throw new Error('Erro ao alterar o usuário.');
         }
     } catch (error) {
         alert(error.message);
