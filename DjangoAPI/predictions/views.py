@@ -109,6 +109,7 @@ class PredictionListView(APIView):
         responses={
             200: PredictionSerializer(many=True),  # Indica que o serializer será usado para a resposta
             401: openapi.Response(description="Não autenticado."),
+            500: openapi.Response(description="Erro interno no servidor."),
         }
     )
     def get(self, request, *args, **kwargs):
@@ -119,11 +120,28 @@ class PredictionListView(APIView):
 
 class PredictionDeleteView(APIView):
     """
-    Endpoint para excluir uma predição específica.
+    Endpoint para excluir uma predição específica do usuário autenticado.
     """
 
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Exclui uma predição específica do usuário autenticado.",
+
+        responses={
+            200: openapi.Response(
+                description="Predição excluída com sucesso.",
+                examples={"application/json": {"message": "Predição excluída com sucesso."}}
+            ),
+            404: openapi.Response(
+                description="Predição não encontrada ou sem permissão.",
+                examples={"application/json": {"error": "Predição não encontrada ou você não tem permissão para excluí-la."}}
+            ),
+            500: openapi.Response(
+                description="Erro interno no servidor.",
+            )
+        }
+    )
     def delete(self, request, pk, *args, **kwargs):
         """
         Lida com requisições DELETE para excluir uma predição específica.
